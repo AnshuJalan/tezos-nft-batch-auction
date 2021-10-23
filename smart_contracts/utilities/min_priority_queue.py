@@ -1,5 +1,9 @@
 import smartpy as sp
 
+#########################################
+# Implementation of a min priority queue
+#########################################
+
 
 class MinPriorityQueue:
     def swap(self, i, j):

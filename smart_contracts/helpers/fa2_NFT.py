@@ -516,6 +516,21 @@ class FA2_change_metadata(FA2_core):
     def set_metadata(self, k, v):
         sp.verify(self.is_administrator(sp.sender), message = self.error_message.not_admin())
         self.data.metadata[k] = v
+    
+    # CHANGED: custom entry-point to update token metadata
+    @sp.entry_point
+    def update_token_metadata(self, param):
+        sp.set_type(param, sp.TList(
+                sp.TRecord(
+                    token_id=sp.TNat,
+                    token_info=sp.TMap(sp.TString, sp.TBytes),
+                )
+            )
+        )
+
+        sp.for item in param:
+            self.data.token_metadata[item.token_id] = item
+
 
 class FA2_mint(FA2_core):
     @sp.entry_point

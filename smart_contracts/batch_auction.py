@@ -1,6 +1,7 @@
 import smartpy as sp
 
 MinPriorityQueue = sp.io.import_script_from_url("file:utilities/min_priority_queue.py")
+Reveal = sp.io.import_script_from_url("file:utilities/reveal.py")
 AuctionTypes = sp.io.import_script_from_url("file:types/auction.py")
 Errors = sp.io.import_script_from_url("file:types/errors.py")
 Addresses = sp.io.import_script_from_url("file:helpers/addresses.py")
@@ -28,7 +29,7 @@ TOTAL_SUPPLY = sp.nat(100)
 ###########
 
 
-class BatchAuction(sp.Contract, MinPriorityQueue.MinPriorityQueue):
+class BatchAuction(sp.Contract, MinPriorityQueue.MinPriorityQueue, Reveal.Reveal):
     def __init__(
         self,
         admin=Addresses.ADMIN,
@@ -75,6 +76,9 @@ class BatchAuction(sp.Contract, MinPriorityQueue.MinPriorityQueue):
             total_supply=total_supply,
             mint_index=mint_index,
             nft_contract_address=nft_contract_address,
+            # Other possible storage items:
+            # - provenance_hash (for token metadata)
+            # - oracle_contract_address (for mint index randomization)
         )
 
         # TODO: write init_type
@@ -167,7 +171,7 @@ class BatchAuction(sp.Contract, MinPriorityQueue.MinPriorityQueue):
             ),
             self.data.nft_contract_address,
             "mint",
-        ).open_some()
+        ).open_some(Errors.INVALID_NFT_CONTRACT)
 
         # Total cost of bought NFTs
         cost = sp.local("cost", sp.nat(0))
@@ -591,6 +595,57 @@ if __name__ == "__main__":
 
         # Dummy admin's balance is the cost price
         scenario.verify(dummy_admin.balance == sp.tez(100))
+
+    #########
+    # reveal
+    #########
+    @sp.add_test(name="reveal reveals the metadata correctly")
+    def test():
+        scenario = sp.test_scenario()
+
+        fa2_nft = Fa2_NFT.FA2(
+            Fa2_NFT.FA2_config(),
+            sp.utils.metadata_of_url("https://example.com"),
+            Addresses.ADMIN,
+        )
+        auction = BatchAuction(
+            admin=Addresses.ADMIN,
+            nft_contract_address=fa2_nft.address,
+        )
+
+        auction.set_initial_balance(sp.tez(160))
+
+        scenario += fa2_nft
+        scenario += auction
+
+        # Mint NFTs
+        scenario += fa2_nft.mint(
+            token_id=0,
+            amount=sp.nat(1),
+            address=Addresses.ALICE,
+            metadata={"": sp.utils.bytes_of_string("https://example.com")},
+        ).run(sender=Addresses.ADMIN)
+        scenario += fa2_nft.mint(
+            token_id=1,
+            amount=sp.nat(1),
+            address=Addresses.BOB,
+            metadata={"": sp.utils.bytes_of_string("https://example.com")},
+        ).run(sender=Addresses.ADMIN)
+
+        # update admin of the NFT contract for reveal
+        scenario += fa2_nft.set_administrator(auction.address).run(sender=Addresses.ADMIN)
+
+        metadata = [
+            sp.record(token_id=0, token_info={"": sp.utils.bytes_of_string("https://update_1.com")}),
+            sp.record(token_id=1, token_info={"": sp.utils.bytes_of_string("https://update_2.com")}),
+        ]
+
+        # reveal metadata
+        scenario += auction.reveal_metadata(metadata).run(sender=Addresses.ADMIN)
+
+        # Verify that metadata has been set in the NFT token contract
+        scenario.verify_equal(fa2_nft.data.token_metadata[0], metadata[0])
+        scenario.verify_equal(fa2_nft.data.token_metadata[1], metadata[1])
 
 
 sp.add_compilation_target("batch_auction", BatchAuction())
