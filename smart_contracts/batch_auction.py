@@ -115,25 +115,25 @@ class BatchAuction(sp.Contract, MinPriorityQueue.MinPriorityQueue, Reveal.Reveal
         with sp.if_(params.quantity > available_for_bid):
             unfilled.value = sp.as_nat(params.quantity - available_for_bid)
 
-        # If there is unfilled bid quantity, check if smallest bids can be removed and the current bid
+        # If there is unfilled bid quantity, check if lowest bids can be removed and the current bid
         # be accomodated
         with sp.if_(unfilled.value > 0):
             # Allows breaking of loop
             break_loop = sp.local("break_loop", False)
             with sp.while_((unfilled.value > 0) & ~break_loop.value):
-                # Smallest bid
+                # lowest bid
                 min_bid = self.data.bids[self.data.bids_priority_queue[1]]
 
                 with sp.if_(min_bid.price >= sp.utils.nat_to_mutez(params.price)):
                     break_loop.value = True
                 with sp.else_():
-                    # If the smallest bid's quantity is less than or equals the unfilled amount,
+                    # If the lowest bid's quantity is less than or equals the unfilled amount,
                     # delete the entire bid
                     with sp.if_(min_bid.quantity <= unfilled.value):
                         unfilled.value = sp.as_nat(unfilled.value - min_bid.quantity)
                         self.data.quantity_under_bid = sp.as_nat(self.data.quantity_under_bid - min_bid.quantity)
                         self.delete()
-                    # Else reduce the quantity for the smallest bid and set unfilled to zero
+                    # Else reduce the quantity for the lowest bid and set unfilled to zero
                     with sp.else_():
                         min_bid.quantity = sp.as_nat(min_bid.quantity - unfilled.value)
                         self.data.quantity_under_bid = sp.as_nat(self.data.quantity_under_bid - unfilled.value)
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     # place_bid (unfilled)
     #######################
 
-    @sp.add_test(name="place_bid works correctly when smallest bid is partially removed")
+    @sp.add_test(name="place_bid works correctly when lowest bid is partially removed")
     def test():
         scenario = sp.test_scenario()
 
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         scenario.verify_equal(auction.data.bids_priority_queue, {1: 1, 2: 2, 3: 3})
         scenario.verify(auction.data.quantity_under_bid == 100)
 
-    @sp.add_test(name="place_bid works correctly when smallest bid is completely removed")
+    @sp.add_test(name="place_bid works correctly when lowest bid is completely removed")
     def test():
         scenario = sp.test_scenario()
 
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         scenario.verify(auction.data.quantity_under_bid == 100)
 
     @sp.add_test(
-        name="place_bid works correctly when smallest bid is completely removed and second smallest bid is partly removed"
+        name="place_bid works correctly when lowest bid is completely removed and second lowest bid is partly removed"
     )
     def test():
         scenario = sp.test_scenario()
