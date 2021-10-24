@@ -1,0 +1,22 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test_smart_contracts:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+    - uses: actions/setup-python@v2
+    - name: "Install SmartPy"
+      run: |
+        sh <(curl -s https://smartpy.io/cli/install.sh)
+    - name: "Compile and Test Smart Contracts"
+      run: |
+        cd smart_contracts
+        ./compile.sh
