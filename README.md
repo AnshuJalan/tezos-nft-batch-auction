@@ -1,6 +1,6 @@
 # NFT Smart Batch Auction
 
-Smart Batch Auctions are an improvement over the traditional first come first serve (FCFS) NFT drops. FCFS design has been in use for a while, but with crypto gaining popularity, the race to occupy block space has been intensifying during NFT drops. Besides leading to general loss of funds due to failed transactions, FCFS strategy is usually timezone dependent and makes it inconvenient for a majority to participate.
+**Smart Batch Auctions** are an improvement over the traditional first come first serve (FCFS) NFT drops. FCFS design has been in use for a while, but with crypto gaining popularity, the race to occupy block space has been intensifying during NFT drops. Besides leading to general loss of funds due to failed transactions, FCFS strategy is usually timezone dependent and makes it inconvenient for a majority to participate.
 
 A [recent article](https://www.paradigm.xyz/2021/10/a-guide-to-designing-effective-nft-launches/) by Paradigm suggested the use of batch-auctions to alleviate this issue and make NFT launches more efficient and light on the chain. This repo provides a sample implementation of the same on **Tezos blockchain**. The implementation is inspired by a Min Priority Queue based solution given by [FrankIsLost](https://github.com/FrankieIsLost) in a [tweet](https://twitter.com/FrankieIsLost/status/1450490193136422918).
 
@@ -11,11 +11,13 @@ Once the bidding period is over, a clearing price is decided and an eligible bat
 
 ## Sample Auction
 
-**Total Supply of NFT:** 100
-
-**Minimum Bid Price:** 0.1 tez / NFT
-
 ### Bids
+
+The bids are registered in the contract in the same sequence as they appear in the table.
+
+- **Total Supply of NFT:** 100
+
+- **Minimum Bid Price:** 0.1 tez / NFT
 
 | ID  | Price (tez) / NFT | Quantity (NFTs) |
 | --- | ----------------- | --------------- |
@@ -28,9 +30,9 @@ Once the bidding period is over, a clearing price is decided and an eligible bat
 
 ### Result
 
-**Clearing Price:** 1.5 tez / NFT
+The clearing price is essentially the Nth highest bid (Where N is the total supply)
 
-### Final Status
+- **Clearing Price:** 1.5 tez / NFT
 
 | ID  | NFTs Received | Balance Refunded (tez) |
 | --- | ------------- | ---------------------- |
